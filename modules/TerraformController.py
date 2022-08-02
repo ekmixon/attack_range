@@ -34,9 +34,7 @@ class TerraformController(IEnvironmentController):
         self.config['splunk_es_app_version'] = re.findall(r'\d+', self.config['splunk_es_app'])[0]
 
         custom_dict = self.config.copy()
-        variables = dict()
-        variables['config'] = custom_dict
-
+        variables = {'config': custom_dict}
         if self.config['tf_backend'] == 'remote':
             with open(os.path.join(os.path.dirname(__file__), '../terraform', self.config['provider'], 'remote/resources.tf.j2'), 'r') as file :
                 filedata = file.read()
@@ -58,7 +56,7 @@ class TerraformController(IEnvironmentController):
         self.log.info("[action] > build\n")
         cwd = os.getcwd()
         os.system('cd ' + os.path.join(os.path.dirname(__file__), '../terraform', self.config['provider'], self.config['tf_backend']) + ' && terraform init ')
-        os.system('cd ' + cwd)
+        os.system(f'cd {cwd}')
         return_code, stdout, stderr = self.terraform.apply(
             capture_output='yes', skip_plan=True, no_color=IsNotFlagged)
         if not return_code:
@@ -70,10 +68,10 @@ class TerraformController(IEnvironmentController):
         self.log.info("[action] > destroy\n")
         cwd = os.getcwd()
         os.system('cd ' + os.path.join(os.path.dirname(__file__), '../terraform', self.config['provider'], self.config['tf_backend']) + ' && terraform init ')
-        os.system('cd ' + cwd)
+        os.system(f'cd {cwd}')
         return_code, stdout, stderr = self.terraform.destroy(
             capture_output='yes', no_color=IsNotFlagged, force=IsNotFlagged, auto_approve=True)
-        self.log.info("Destroyed with return code: " + str(return_code))
+        self.log.info(f"Destroyed with return code: {str(return_code)}")
         statepath = self.config["statepath"]
         statebakpath = self.config["statepath"] + ".backup"
         if os.path.exists(statepath) and return_code==0:
@@ -116,7 +114,10 @@ class TerraformController(IEnvironmentController):
 
             for test in test_file['tests']:
                 epoch_time = str(int(time.time()))
-                dump_name = folder_name = "attack_data_" + epoch_time + "_" + test['name'].lower().replace(" ", "_").replace(".", "_")
+                dump_name = folder_name = f"attack_data_{epoch_time}_" + test[
+                    'name'
+                ].lower().replace(" ", "_").replace(".", "_")
+
                 result_test = {}
                 for attack_data in test['attack_data']:
                     if 'update_timestamp' in attack_data:
@@ -137,11 +138,14 @@ class TerraformController(IEnvironmentController):
                     for baseline_obj in test['baselines']:
                         baseline_file_name = baseline_obj['file']
                         baseline = self.load_file(os.path.join(os.path.dirname(__file__), '../' + self.config['security_content_path'] + '/' + baseline_file_name))
-                        result_obj = dict()
-                        result_obj['baseline'] = baseline_obj['name']
-                        result_obj['baseline_file'] = baseline_obj['file']
-                        result = self.get_baseline_result(baseline_obj, baseline)
-                        if result:
+                        result_obj = {
+                            'baseline': baseline_obj['name'],
+                            'baseline_file': baseline_obj['file'],
+                        }
+
+                        if result := self.get_baseline_result(
+                            baseline_obj, baseline
+                        ):
                             results_baselines.append(result)
                     result_test['baselines_result'] = results_baselines
 
@@ -164,16 +168,24 @@ class TerraformController(IEnvironmentController):
 
     def get_baseline_result(self, baseline_obj, baseline):
 
-        result = {}
         instance_ip, splunk_rest_port = self.get_instance_ip_and_port()
 
-        if instance_ip and splunk_rest_port:
-            result = splunk_sdk.test_baseline_search(instance_ip, str(self.config['attack_range_password']),
-                                                     baseline['search'], baseline_obj['pass_condition'],
-                                                     baseline['name'], baseline_obj['file'],
-                                                     baseline_obj['earliest_time'], baseline_obj['latest_time'],
-                                                     self.log, splunk_rest_port)
-        return result
+        return (
+            splunk_sdk.test_baseline_search(
+                instance_ip,
+                str(self.config['attack_range_password']),
+                baseline['search'],
+                baseline_obj['pass_condition'],
+                baseline['name'],
+                baseline_obj['file'],
+                baseline_obj['earliest_time'],
+                baseline_obj['latest_time'],
+                self.log,
+                splunk_rest_port,
+            )
+            if instance_ip and splunk_rest_port
+            else {}
+        )
 
     def get_detection_result(self, detection, test, test_delete_data):
 

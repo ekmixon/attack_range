@@ -55,7 +55,7 @@ starting program loaded for B1 battle droid """ + Back.BLACK + Fore.BLUE + Style
     config = parser.load_conf(configpath)
 
     log = logger.setup_logging(config['log_path'], config['log_level'])
-    log.info("INIT - attack_range v" + str(VERSION))
+    log.info(f"INIT - attack_range v{str(VERSION)}")
 
     if config['provider'] == 'azure':
         os.environ["AZURE_SUBSCRIPTION_ID"] = config['azure_subscription_id']
@@ -110,7 +110,7 @@ def simulate(args):
     # Give CLI priority over the config file for pre-configured techniques
     if not simulation_playbook:
         simulation_playbook = config['purplesharp_simulation_playbook']
- 
+
     if not simulation_atomics:
         simulation_atomics = 'no'
 

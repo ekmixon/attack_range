@@ -14,31 +14,28 @@ def test_baseline_search(splunk_host, splunk_password, search, pass_condition, b
             password=splunk_password
         )
     except Exception as e:
-        log.error("Unable to connect to Splunk instance: " + str(e))
+        log.error(f"Unable to connect to Splunk instance: {str(e)}")
         return {}
 
     # search and replace \\ with \\\
     # search = search.replace('\\','\\\\')
 
-    if search.startswith('|'):
-        search = search
-    else:
-        search = 'search ' + search
-
+    search = search if search.startswith('|') else f'search {search}'
     kwargs = {"exec_mode": "blocking",
               "dispatch.earliest_time": earliest_time,
               "dispatch.latest_time": latest_time}
 
-    splunk_search = search + ' ' + pass_condition
-    test_results = dict()
-    test_results['baseline_name'] = baseline_name
-    test_results['baseline_file'] = baseline_file
-    test_results["splunk_search"] = splunk_search
+    splunk_search = f'{search} {pass_condition}'
+    test_results = {
+        'baseline_name': baseline_name,
+        'baseline_file': baseline_file,
+        "splunk_search": splunk_search,
+    }
 
     try:
         job = service.jobs.create(splunk_search, **kwargs)
     except Exception as e:
-        log.error("Unable to execute baseline: " + str(e))
+        log.error(f"Unable to execute baseline: {str(e)}")
         test_results['error'] = True
         test_results['messages'] = {"error": [str(e)]}
         return test_results
@@ -55,13 +52,13 @@ def test_baseline_search(splunk_host, splunk_password, search, pass_condition, b
 
 
     if int(job['resultCount']) != 1:
-        log.error("Test failed for baseline: " + baseline_name)
+        log.error(f"Test failed for baseline: {baseline_name}")
         test_results['error'] = True
-        return test_results
     else:
-        log.info("Test successful for baseline: " + baseline_name)
+        log.info(f"Test successful for baseline: {baseline_name}")
         test_results['error'] = False
-        return test_results
+
+    return test_results
 
 
 def test_detection_search(splunk_host, splunk_password, search, pass_condition, detection_name, detection_file, earliest_time, latest_time, log, splunk_rest_port=8089):
@@ -73,31 +70,28 @@ def test_detection_search(splunk_host, splunk_password, search, pass_condition, 
             password=splunk_password
         )
     except Exception as e:
-        log.error("Unable to connect to Splunk instance: " + str(e))
+        log.error(f"Unable to connect to Splunk instance: {str(e)}")
         return {}
 
     # search and replace \\ with \\\
     # search = search.replace('\\','\\\\')
 
-    if search.startswith('|'):
-        search = search
-    else:
-        search = 'search ' + search
-
+    search = search if search.startswith('|') else f'search {search}'
     kwargs = {"exec_mode": "blocking",
               "dispatch.earliest_time": earliest_time,
               "dispatch.latest_time": latest_time}
 
-    splunk_search = search + ' ' + pass_condition
-    test_results = dict()
-    test_results['detection_name'] = detection_name
-    test_results['detection_file'] = detection_file
-    test_results["splunk_search"] = splunk_search
+    splunk_search = f'{search} {pass_condition}'
+    test_results = {
+        'detection_name': detection_name,
+        'detection_file': detection_file,
+        "splunk_search": splunk_search,
+    }
 
     try:
         job = service.jobs.create(splunk_search, **kwargs)
     except Exception as e:
-        log.error("Unable to execute detection: " + str(e))
+        log.error(f"Unable to execute detection: {str(e)}")
         test_results['error'] = True
         test_results['messages'] = {"error": [str(e)]}
         return test_results
@@ -114,13 +108,13 @@ def test_detection_search(splunk_host, splunk_password, search, pass_condition, 
 
 
     if int(job['resultCount']) != 1:
-        log.error("test failed for detection: " + detection_name)
+        log.error(f"test failed for detection: {detection_name}")
         test_results['error'] = True
-        return test_results
     else:
-        log.info("test successful for detection: " + detection_name)
+        log.info(f"test successful for detection: {detection_name}")
         test_results['error'] = False
-        return test_results
+
+    return test_results
 
 
 def search(splunk_host, splunk_password, search_name, log, splunk_rest_port=8089):
@@ -240,7 +234,7 @@ def delete_attack_data(splunk_host, splunk_password, splunk_rest_port=8089):
             password=splunk_password
         )
     except Exception as e:
-        print("Unable to connect to Splunk instance: " + str(e))
+        print(f"Unable to connect to Splunk instance: {str(e)}")
         return False
 
     splunk_search = 'search index=test* | delete'
@@ -252,7 +246,7 @@ def delete_attack_data(splunk_host, splunk_password, splunk_rest_port=8089):
     try:
         job = service.jobs.create(splunk_search, **kwargs)
     except Exception as e:
-        print("Unable to execute search: " + str(e))
+        print(f"Unable to execute search: {str(e)}")
         return False
 
     return True
@@ -268,14 +262,17 @@ def execute_savedsearch(splunk_host, splunk_password, search_name, earliest, lat
             app="dev_sec_ops_analytics"
         )
     except Exception as e:
-        print("Unable to connect to Splunk instance: " + str(e))
+        print(f"Unable to connect to Splunk instance: {str(e)}")
         return False  
 
     mysavedsearch = service.saved_searches[search_name]
 
-    kwargs = {"dispatch.earliest_time": "-" + earliest,
+    kwargs = {
+        "dispatch.earliest_time": f"-{earliest}",
         "dispatch.latest_time": latest,
-         "disabled": 0}
+        "disabled": 0,
+    }
+
 
     mysavedsearch.update(**kwargs).refresh()
 

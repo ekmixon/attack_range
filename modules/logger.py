@@ -21,5 +21,4 @@ def setup_logging(LOG_PATH,LOG_LEVEL):
     return logger
 
 def get():
-    logger = logging.getLogger('attack_range')
-    return logger
+    return logging.getLogger('attack_range')

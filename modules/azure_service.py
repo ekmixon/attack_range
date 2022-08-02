@@ -51,7 +51,7 @@ def get_instance(config, instance_name, log):
         if instance['vm_obj'].name == instance_name:
             return instance
 
-    log.error('Can not find instance: ' + instance_name)
+    log.error(f'Can not find instance: {instance_name}')
     sys.exit(1)
 
 

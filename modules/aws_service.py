@@ -34,11 +34,13 @@ def get_all_instances(config):
     instances = []
     for reservation in response['Reservations']:
         for instance in reservation['Instances']:
-            if instance['State']['Name']!='terminated':
-                if len(instance['Tags']) > 0:
-                    str = instance['Tags'][0]['Value']
-                    if (config['range_name'] in str) and (config['key_name'] in str):
-                        instances.append(instance)
+            if (
+                instance['State']['Name'] != 'terminated'
+                and len(instance['Tags']) > 0
+            ):
+                str = instance['Tags'][0]['Value']
+                if (config['range_name'] in str) and (config['key_name'] in str):
+                    instances.append(instance)
 
     return instances
 
@@ -55,7 +57,7 @@ def check_ec2_instance_state(ec2_name, state, config):
     instance = get_instance_by_name(ec2_name, config)
 
     if not instance:
-        log.error(ec2_name + ' not found as AWS EC2 instance.')
+        log.error(f'{ec2_name} not found as AWS EC2 instance.')
         sys.exit(1)
 
     return (instance['State']['Name'] == state)
@@ -66,7 +68,7 @@ def change_ec2_state(instances, new_state, log, config):
     client = boto3.client('ec2', region_name=region)
 
     if len(instances) == 0:
-        log.error(ec2_name + ' not found as AWS EC2 instance.')
+        log.error(f'{ec2_name} not found as AWS EC2 instance.')
         sys.exit(1)
 
     if new_state == 'stopped':

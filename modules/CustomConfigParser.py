@@ -41,7 +41,7 @@ class CustomConfigParser:
 
         if '0.0.0.0/0' in self.settings['ip_whitelist']:
             print("WARNING - with configuration file at: {0}, the attack range will be public and open to the world, it is recommended that users secure attack_range servers by whitelisting only the public IP address in this format: ip_whitelist= <X.X.X.X>/32".format(CONFIG_PATH))
-             
+
         # Check if Phantom Credentials work
         if self.settings['phantom_server'] == "1":
             base_url = "https://repo.phantom.us/phantom/4.10/product"

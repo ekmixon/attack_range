@@ -35,7 +35,7 @@ def get_random_password():
     password += random.choice(string.ascii_uppercase)
     password += random.choice(string.digits)
 
-    for i in range(16):
+    for _ in range(16):
         password += random.choice(random_source)
 
     password_list = list(password)
@@ -46,7 +46,7 @@ def get_random_password():
 def create_key_pair_aws(client):
     # create new ssh key
     epoch_time = str(int(time.time()))
-    ssh_key_name = getpass.getuser() + "-" + epoch_time[-5:] + ".key"
+    ssh_key_name = f"{getpass.getuser()}-{epoch_time[-5:]}.key"
     # create ssh keys
     response = client.create_key_pair(KeyName=str(ssh_key_name)[:-4])
     with open(ssh_key_name, "w") as ssh_key:
@@ -58,8 +58,8 @@ def create_key_pair_azure():
     # create new ssh key
     epoch_time = str(int(time.time()))
     key = RSA.generate(2048)
-    priv_key_name = getpass.getuser() + "-" + epoch_time[-5:] + ".key"
-    pub_key_name = getpass.getuser() + "-" + epoch_time[-5:] + ".pub"
+    priv_key_name = f"{getpass.getuser()}-{epoch_time[-5:]}.key"
+    pub_key_name = f"{getpass.getuser()}-{epoch_time[-5:]}.pub"
     with open(priv_key_name, 'wb') as content_file:
         os.chmod(priv_key_name, 0o600)
         content_file.write(key.exportKey('PEM'))
@@ -69,13 +69,13 @@ def create_key_pair_azure():
     return priv_key_name, pub_key_name
 
 def check_for_generated_keys(answers):
-    keys = []
-    for file in os.listdir("."):
-        if file.endswith(".key"):
-            keys.append(Path(file).resolve())
-    if len(keys) > 0:
-        return True
-    return False
+    return bool(
+        keys := [
+            Path(file).resolve()
+            for file in os.listdir(".")
+            if file.endswith(".key")
+        ]
+    )
 
 def get_generated_keys():
     priv_keys = []
@@ -85,26 +85,12 @@ def get_generated_keys():
             priv_keys.append(Path(file).resolve())
         if file.endswith(".pub"):
             pub_keys.append(Path(file).resolve())
-    if len(priv_keys) > 0:
-        priv_key = priv_keys[0]
-    else:
-        priv_key = ''
-
-    if len(pub_keys) > 0:
-        pub_key = pub_keys[0]
-    else:
-        pub_key = ''
-
+    priv_key = priv_keys[0] if priv_keys else ''
+    pub_key = pub_keys[0] if pub_keys else ''
     return priv_key, pub_key
 
 def check_reuse_keys(answers):
-    if 'reuse_keys' in answers:
-        if answers['reuse_keys']:
-            return False
-        else:
-            return True
-    else:
-        return True
+    return 'reuse_keys' not in answers or not answers['reuse_keys']
 
 def new(config):
     attack_range_config = Path(config)

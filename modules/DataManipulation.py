@@ -18,7 +18,7 @@ class DataManipulation:
         if sourcetype == 'aws:cloudtrail':
             self.manipulate_timestamp_cloudtrail(file_path, logger)
 
-        if source == 'WinEventLog:System' or source == 'WinEventLog:Security':
+        if source in ['WinEventLog:System', 'WinEventLog:Security']:
             self.manipulate_timestamp_windows_event_log_raw(file_path, logger)
 
         if source == 'exchange':
@@ -79,7 +79,7 @@ class DataManipulation:
             new_time = self.difference + event_time
             return new_time.strftime("%m/%d/%Y %I:%M:%S %p")
         except Exception as e:
-            self.logger.error("Error in timestamp replacement occured: " + str(e))
+            self.logger.error(f"Error in timestamp replacement occured: {str(e)}")
             return match.group()
 
 
